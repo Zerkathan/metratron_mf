@@ -28,6 +28,9 @@ MANIFEST
 venv/
 ENV/
 env/
+# Excluir todo el contenido de .venv
+.venv/**
+!.venv/.gitkeep
 
 # IDE
 .vscode/
