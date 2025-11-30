@@ -1,0 +1,121 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Output files
+output/
+*.mp4
+*.mp3
+*.wav
+*.m4a
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+
+# Temporary files
+assets/temp/
+*.tmp
+*.temp
+*TEMP_MPY*
+
+# Media files (except templates/branding)
+assets/music/
+assets/videos/
+assets/images/
+!assets/branding/
+
+# Cookies and tokens (sensitive)
+*.pickle
+*_cookies.txt
+token*.json
+client_secret.json
+
+# Stats and profiles (optional - descomentar si quieres ignorar)
+# stats_history.json
+# profiles/
+
+# Archive
+archive/
+
+# Thumbnails
+*.jpg
+*.jpeg
+*.png
+!assets/branding/*.png
+!assets/fonts/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Backup files
+*.bak
+*.backup
+
+# Windows
+desktop.ini
+Thumbs.db
+ehthumbs.db
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Documentación temporal
+BUSQUEDA_GET_FRAME.md
+
