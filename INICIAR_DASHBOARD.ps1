@@ -33,3 +33,8 @@ Write-Host "📊 Iniciando Streamlit Dashboard..." -ForegroundColor Cyan
 & .\.venv\Scripts\streamlit.exe run dashboard.py
 
 
+
+
+
+
+

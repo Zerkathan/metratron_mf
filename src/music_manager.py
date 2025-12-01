@@ -112,6 +112,10 @@ class MusicManager:
             return "curiosity"
         elif any(word in style_lower for word in ["lofi", "lo-fi", "chill", "relax"]):
             return "lofi"
+        elif "music" in style_lower or "música" in style_lower:
+            # "Music" genérico -> intentar carpeta visualizer o general
+            # Si existe una carpeta 'visualizer', se usará (si se añade al mapa), sino 'general'
+            return "general"
         
         # Default
         return "general"
@@ -163,8 +167,10 @@ class MusicManager:
         
         if music_files:
             selected = random.choice(music_files)
-            logger.success(f"✅ Música seleccionada: {Path(selected).name} (estilo: {folder_name})")
-            return selected
+            # Asegurar ruta absoluta
+            selected_abs = str(Path(selected).resolve())
+            logger.success(f"✅ Música seleccionada: {Path(selected_abs).name} (estilo: {folder_name})")
+            return selected_abs
         
         logger.warning(f"⚠️ No se encontraron archivos de música en '{folder_name}'")
         
@@ -175,8 +181,9 @@ class MusicManager:
             
             if music_files:
                 selected = random.choice(music_files)
-                logger.info(f"✅ Música seleccionada desde 'general': {Path(selected).name}")
-                return selected
+                selected_abs = str(Path(selected).resolve())
+                logger.info(f"✅ Música seleccionada desde 'general': {Path(selected_abs).name}")
+                return selected_abs
         
         # 3. FALLBACK FINAL: Retornar None (el video se hará sin música)
         logger.warning("⚠️ No se encontró música en ninguna carpeta. El video se generará sin música de fondo.")

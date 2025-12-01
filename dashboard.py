@@ -2489,8 +2489,17 @@ with tabs[4]:
                 if clip.size[0] != target_w or clip.size[1] != target_h:
                     clip = clip.resize((target_w, target_h))
                 
-                video_clips.append(clip)
-                logger.info(f"✅ Clip {idx + 1} procesado: {clip.duration:.2f}s, {clip.size} ({'Imagen animada' if is_image else 'Video'})")
+                # 🔧 VALIDACIÓN: Solo agregar clips válidos (evita error en get_frame)
+                if clip is not None and hasattr(clip, 'get_frame') and hasattr(clip, 'duration') and clip.duration is not None and clip.duration > 0:
+                    video_clips.append(clip)
+                    logger.info(f"✅ Clip {idx + 1} procesado: {clip.duration:.2f}s, {clip.size} ({'Imagen animada' if is_image else 'Video'})")
+                else:
+                    logger.error(f"❌ Clip {idx + 1} inválido (None o sin get_frame), será omitido")
+                    if clip is not None:
+                        try:
+                            clip.close()
+                        except:
+                            pass               
             
             if not video_clips:
                 raise ValueError("No se pudieron cargar los clips de video")
@@ -2505,11 +2514,27 @@ with tabs[4]:
                         transition_cut_points.append(cumulative_time)
                 logger.info(f"🎬 Puntos de corte detectados: {len(transition_cut_points)} transiciones")
             
-            # --- PASO 2.5: Concatenar todos los clips en orden ---
-            logger.info(f"Concatenando {len(video_clips)} clip(s)...")
-            concatenated_video = concatenate_videoclips(video_clips, method="compose")
-            total_video_duration = concatenated_video.duration
-            logger.success(f"✅ Video concatenado: {total_video_duration:.2f}s total")
+             # --- PASO 2.5: Validar y concatenar todos los clips en orden ---
+            # 🔧 CORREGIDO: Filtrar clips None o inválidos antes de concatenar
+            valid_clips = []
+            for clip_idx, clip in enumerate(video_clips):
+                if clip is None:
+                    logger.warning(f"⚠️ Clip {clip_idx + 1} es None, omitiendo...")
+                    continue
+                if not hasattr(clip, 'get_frame'):
+                    logger.warning(f"⚠️ Clip {clip_idx + 1} no tiene get_frame, omitiendo...")
+                    continue
+                if not hasattr(clip, 'duration') or clip.duration is None or clip.duration <= 0:
+                    logger.warning(f"⚠️ Clip {clip_idx + 1} tiene duración inválida ({getattr(clip, 'duration', 'N/A')}), omitiendo...")
+                    continue
+                valid_clips.append(clip)
+
+            if not valid_clips:
+                raise ValueError("❌ No hay clips válidos para concatenar. Todos los clips fueron None o inválidos.")
+
+            logger.info(f"Concatenando {len(valid_clips)} clip(s) válidos (de {len(video_clips)} originales)...")
+            concatenated_video = concatenate_videoclips(valid_clips, method="compose")
+
             
             # --- PASO 3: Guardar y cargar audio ---
             audio_path = temp_dir / f"manual_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
@@ -2539,6 +2564,10 @@ with tabs[4]:
                 logger.info(f"Video más corto. Loopeando secuencia completa {loops_needed} vez(ces)...")
                 
                 # Crear lista de la secuencia completa repetida
+              # 🔧 Validar que concatenated_video sea válido antes de loopear
+                if concatenated_video is None or not hasattr(concatenated_video, 'get_frame'):
+                    raise ValueError("❌ No se puede loopear: el video concatenado es inválido")
+                
                 sequence_clips = [concatenated_video] * loops_needed
                 looped_video = concatenate_videoclips(sequence_clips, method="compose")
                 
@@ -2657,10 +2686,30 @@ with tabs[4]:
                     logger.warning("⚠️ No hay subtítulos válidos, renderizando sin subtítulos")
             
             # Crear CompositeVideoClip con los layers válidos
-            if len(layers) > 1:
-                final_clip = CompositeVideoClip(layers)
+             # Crear CompositeVideoClip con los layers válidos
+            # 🔧 CORREGIDO: Filtrar cualquier layer None o inválido antes de componer
+            valid_layers = []
+            for layer_idx, layer in enumerate(layers):
+                if layer is None:
+                    logger.warning(f"⚠️ Layer {layer_idx} es None, omitiendo...")
+                    continue
+                if not hasattr(layer, 'get_frame'):
+                    logger.warning(f"⚠️ Layer {layer_idx} no tiene get_frame, omitiendo...")
+                    continue
+                # Validar duración solo si no es el video base (índice 0)
+                if layer_idx > 0 and hasattr(layer, 'duration') and (layer.duration is None or layer.duration <= 0):
+                    logger.warning(f"⚠️ Layer {layer_idx} (subtítulo) tiene duración inválida, omitiendo...")
+                    continue
+                valid_layers.append(layer)
+
+            if not valid_layers:
+                raise ValueError("❌ No hay layers válidos para componer el video final.")
+
+            if len(valid_layers) > 1:
+                logger.info(f"✅ Componiendo video con {len(valid_layers)} layers válidos")
+                final_clip = CompositeVideoClip(valid_layers)
             else:
-                final_clip = final_video
+                final_clip = valid_layers[0]
             
             # Renderizar video final
             output_dir = BASE_DIR / "output"

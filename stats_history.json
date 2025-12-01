@@ -1,0 +1,93 @@
+[
+  {
+    "timestamp": "2025-11-25T02:37:54.997682",
+    "profile": "Configuración Actual",
+    "topic": "vinilos",
+    "duration_minutes": 1.0,
+    "upload_status": "Solo Render"
+  },
+  {
+    "timestamp": "2025-11-30T08:04:49.380138",
+    "profile": "Auto",
+    "topic": "Pianos ",
+    "duration_minutes": 60.0,
+    "upload_status": "Success"
+  },
+  {
+    "timestamp": "2025-11-30T08:04:49.777678",
+    "profile": "Configuración Actual",
+    "topic": "Pianos ",
+    "duration_minutes": 1.0,
+    "upload_status": "Solo Render"
+  },
+  {
+    "timestamp": "2025-11-30T20:31:18.856465",
+    "profile": "Auto",
+    "topic": "la verdad sobre los gatos negros",
+    "duration_minutes": 60.0,
+    "upload_status": "Success"
+  },
+  {
+    "timestamp": "2025-11-30T20:31:18.899511",
+    "profile": "Configuración Actual",
+    "topic": "la verdad sobre los gatos negros",
+    "duration_minutes": 1.0,
+    "upload_status": "Solo Render"
+  },
+  {
+    "timestamp": "2025-11-30T21:31:40.582563",
+    "profile": "Auto",
+    "topic": "la verdad sobre los gatos negros",
+    "duration_minutes": 60.0,
+    "upload_status": "Success"
+  },
+  {
+    "timestamp": "2025-11-30T21:31:40.692010",
+    "profile": "Configuración Actual",
+    "topic": "la verdad sobre los gatos negros",
+    "duration_minutes": 1.0,
+    "upload_status": "Solo Render"
+  },
+  {
+    "timestamp": "2025-11-30T23:52:02.512278",
+    "profile": "Auto",
+    "topic": "PIANO",
+    "duration_minutes": 60.0,
+    "upload_status": "Success"
+  },
+  {
+    "timestamp": "2025-11-30T23:52:02.579501",
+    "profile": "Configuración Actual",
+    "topic": "PIANO",
+    "duration_minutes": 1.0,
+    "upload_status": "Solo Render"
+  },
+  {
+    "timestamp": "2025-12-01T03:05:19.060610",
+    "profile": "Auto",
+    "topic": "lo fi",
+    "duration_minutes": 60.0,
+    "upload_status": "Success"
+  },
+  {
+    "timestamp": "2025-12-01T03:05:19.091775",
+    "profile": "Configuración Actual",
+    "topic": "lo fi",
+    "duration_minutes": 1.0,
+    "upload_status": "Solo Render"
+  },
+  {
+    "timestamp": "2025-12-01T03:47:48.401245",
+    "profile": "Auto",
+    "topic": "Lo fi Beats Sun",
+    "duration_minutes": 60.0,
+    "upload_status": "Success"
+  },
+  {
+    "timestamp": "2025-12-01T03:47:48.439564",
+    "profile": "Configuración Actual",
+    "topic": "Lo fi Beats Sun",
+    "duration_minutes": 1.0,
+    "upload_status": "Solo Render"
+  }
+]

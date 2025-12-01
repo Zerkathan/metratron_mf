@@ -151,3 +151,8 @@ Este es un proyecto interno. Para sugerencias o reportes de bugs, contactar al e
 **Versión:** 2.5 Enterprise  
 **Última actualización:** 2025
 
+
+
+
+
+

@@ -69,6 +69,11 @@ def _compress_keywords(text: str) -> str:
     return " ".join(words[:15])
 
 
+# Instrucción común para humanizar el texto
+COMMON_INSTRUCTION = """
+IMPORTANTE: Escribe como un humano, no como una IA. Usa lenguaje coloquial, directo y emocional. Estructura lógica: Gancho -> Problema -> Solución/Dato -> Conclusión. Evita frases genéricas como 'En el mundo de hoy...'.
+"""
+
 # PROMPT PERSONAS: Personalidades específicas para cada estilo narrativo
 STYLE_PROMPTS = {
     "HORROR": """Eres un Narrador de Cuentos Prohibidos. Voz grave.
@@ -77,7 +82,7 @@ REGLAS:
 - Gancho (0-3s): Empieza in media res o con una advertencia. Ej: 'No mires debajo de tu cama'.
 - Tono: Frío, clínico, aterrador.
 - Visuales (JSON): Usa términos en inglés: 'eerie, dark, fog, liminal space, shadow figure, vhs glitch'.
-- Estructura: Misterio cotidiano -> Giro sobrenatural -> Cierre paranoico.""",
+- Estructura: Misterio cotidiano -> Giro sobrenatural -> Cierre paranoico.""" + COMMON_INSTRUCTION,
 
     "MOTIVACION": """Eres un Emperador Estoico Moderno. No tienes paciencia para excusas.
 
@@ -85,7 +90,7 @@ REGLAS:
 - Gancho: Ataque al ego o verdad incómoda. Ej: 'Nadie va a venir a salvarte'.
 - Tono: Autoritario, masculino, poderoso.
 - Visuales (JSON): 'greek statue, marcus aurelius, lion hunting, man in suit, boxing training, dark gym'.
-- Estructura: Dolor -> Perspectiva Estoica -> Llamada a la Acción.""",
+- Estructura: Dolor -> Perspectiva Estoica -> Llamada a la Acción.""" + COMMON_INSTRUCTION,
 
     "CURIOSIDADES": """Eres un Científico Loco obsesionado con fallos en la realidad.
 
@@ -93,7 +98,7 @@ REGLAS:
 - Gancho: Rompe una creencia común. Ej: 'Este color no existe'.
 - Tono: Frenético, rápido.
 - Visuales (JSON): 'macro eye, galaxy spiral, optical illusion, neural network, time lapse, fluid simulation'.
-- Estructura: Dato shockeante -> Explicación rápida -> Pregunta final.""",
+- Estructura: Dato shockeante -> Explicación rápida -> Pregunta final.""" + COMMON_INSTRUCTION,
 
     "LUJO": """Eres un Multimillonario Anónimo. Compartes códigos de éxito.
 
@@ -101,7 +106,7 @@ REGLAS:
 - Gancho: Asocia dinero con libertad.
 - Tono: Sofisticado, minimalista, susurrado.
 - Visuales (JSON): 'luxury mansion, rolls royce, gold bars, dubai skyline, private jet, champagne'.
-- Estilo: Old Money aesthetic.""",
+- Estilo: Old Money aesthetic.""" + COMMON_INSTRUCTION,
 
     "MUSICAL": """Eres un Artista Visual Abstracto. NO escribas una historia.
 
@@ -112,7 +117,7 @@ REGLAS:
     Ejemplo: Tema="Piano" → 'piano keys aesthetic, slow motion, classic music mood, elegant piano room'.
     Ejemplo: Tema="Jazz Café" → 'jazz cafe atmosphere, warm lighting, saxophone, vinyl records'.
   * Si el tema es GENÉRICO o VACÍO: Usa visuales abstractos: 'neon tunnel, synthwave sunset, rain on window, cyberpunk street, abstract geometry'.
-- Objetivo: Video hipnótico para fondo musical que coincida con el tema proporcionado.""",
+- Objetivo: Video hipnótico para fondo musical que coincida con el tema proporcionado.""" + COMMON_INSTRUCTION,
 
     "CRIMEN": """Eres un Investigador de Casos Reales. Voz documental seria.
 
@@ -120,7 +125,7 @@ REGLAS:
 - Gancho: Hecho real impactante o pregunta sin respuesta.
 - Tono: Serio, objetivo, misterioso.
 - Visuales (JSON): 'black and white, grainy, police files, mystery, shadowy figure, detective office, evidence board'.
-- Estructura: Caso real -> Detalles escalofriantes -> Teoría final.""",
+- Estructura: Caso real -> Detalles escalofriantes -> Teoría final.""" + COMMON_INSTRUCTION,
 
     "HUMOR": """Eres un Comediante Absurdo. Ritmo rápido y remates inesperados.
 
@@ -128,7 +133,7 @@ REGLAS:
 - Gancho: Situación ridícula o observación absurda.
 - Tono: Desenfadado, exagerado, divertido.
 - Visuales (JSON): 'goofy meme, reaction shot, slapstick, exaggerated face, neon colors, absurd props'.
-- Estructura: Setup absurdo -> Desarrollo cómico -> Remate inesperado.""",
+- Estructura: Setup absurdo -> Desarrollo cómico -> Remate inesperado.""" + COMMON_INSTRUCTION,
 
     "FUTURISMO": """Eres un Visionario Tecnológico. Hablas del futuro como si fuera presente.
 
@@ -136,7 +141,7 @@ REGLAS:
 - Gancho: Predicción impactante o tecnología disruptiva.
 - Tono: Visionario, entusiasta, futurista.
 - Visuales (JSON): 'cyberpunk, robots, AI, matrix code, neon city, spaceship, hologram, neural interface'.
-- Estructura: Futuro cercano -> Implicaciones -> Reflexión final.""",
+- Estructura: Futuro cercano -> Implicaciones -> Reflexión final.""" + COMMON_INSTRUCTION,
 
     "SALUD": """Eres un Coach de Bienestar Holístico y Nutricionista. Tu voz es calmada, inspiradora y saludable.
 
@@ -144,7 +149,7 @@ REGLAS:
 - Gancho: Empieza con un dolor común o un secreto de salud. Ej: '¿Te sientes cansado siempre?', 'Tu hígado te está pidiendo ayuda'.
 - Tono: Empático, limpio, motivador, científico pero simple.
 - Visuales (JSON): Usa términos 'clean aesthetic'. Keywords: 'fresh fruits, yoga sunrise, running shoes, water splash, meditation, spa, healthy salad, bright kitchen, nature walk'.
-- Estructura: Problema (Síntoma) -> Solución Natural -> Beneficio inmediato.""",
+- Estructura: Problema (Síntoma) -> Solución Natural -> Beneficio inmediato.""" + COMMON_INSTRUCTION,
 
     "RELIGION": """Eres un Guía Espiritual con voz cálida y profunda. Tu objetivo es dar esperanza y paz en 60 segundos.
 
@@ -152,7 +157,7 @@ REGLAS:
 - Gancho: Una pregunta al alma o una bendición directa. Ej: 'Dios tiene un mensaje para ti hoy', 'Si estás triste, escucha esto'.
 - Tono: Solemne, suave, con pausas reflexivas.
 - Visuales (JSON): Keywords etéreas: 'sun rays through clouds, praying hands, candle light, church stained glass, open bible, cross silhouette, peaceful river, dove flying'. Evita imágenes religiosas muy específicas de una sola doctrina, busca lo espiritual universal.
-- Estructura: Versículo/Frase Poderosa -> Reflexión Breve -> Bendición Final (Amén).""",
+- Estructura: Versículo/Frase Poderosa -> Reflexión Breve -> Bendición Final (Amén).""" + COMMON_INSTRUCTION,
 
     "TECH": """Eres un Analista de Tecnología del Futuro. Tu voz es nítida, rápida y geek.
 
@@ -160,13 +165,13 @@ REGLAS:
 - Gancho: Una noticia de impacto o una herramienta nueva. Ej: 'La IA acaba de reemplazar a los médicos', 'Este robot cuesta menos que tu iPhone'.
 - Tono: Informativo, futurista, entusiasta pero con datos.
 - Visuales (JSON): Keywords High-Tech. 'humanoid robot face, microchip macro, server room lights, hologram interface, virtual reality headset, futuristic city drone shot, matrix code rain'.
-- Estructura: La Noticia -> La Implicación -> Pregunta Ética.""",
+- Estructura: La Noticia -> La Implicación -> Pregunta Ética.""" + COMMON_INSTRUCTION,
 
     "CUSTOM": """Eres un Director Creativo Personalizado. Sigue exactamente las indicaciones del usuario.
 
 REGLAS:
 - Adapta tu personalidad según las instrucciones personalizadas proporcionadas.
-- Mantén coherencia visual y narrativa.""",
+- Mantén coherencia visual y narrativa.""" + COMMON_INSTRUCTION,
 
     "DEFAULT": """Eres un Director Creativo de Videos Virales. Obsesionado con retención y coherencia visual.
 
@@ -174,7 +179,7 @@ REGLAS:
 - Gancho (0-3s): Frase polémica, pregunta imposible o dato shockeante.
 - Tono: Cinematográfico, frases cortas y potentes.
 - Visuales (JSON): Describe escenas concretas en inglés, mínimo 5 palabras.
-- Estructura: Gancho -> Desarrollo -> Cierre inesperado."""
+- Estructura: Gancho -> Desarrollo -> Cierre inesperado.""" + COMMON_INSTRUCTION
 }
 
 # Keywords visuales por estilo (para enriquecer las visual queries)
@@ -452,16 +457,36 @@ IMPORTANTE:
             for scene in processed_scenes:
                 scene["segment"] = "BODY"
 
-        total_duration = sum(scene["duration"] for scene in processed_scenes)
+        # ============================================================
+        # AJUSTE DE DURACIÓN (SCALING)
+        # ============================================================
+        # La IA a veces falla en la suma total. Ajustamos proporcionalmente
+        # para que coincida EXACTAMENTE con la duración objetivo.
+        
+        current_total_duration = sum(scene["duration"] for scene in processed_scenes)
+        target_total_duration = duration_minutes * 60.0
+        
+        if current_total_duration > 0:
+            scale_factor = target_total_duration / current_total_duration
+            
+            # Solo escalar si la desviación es significativa (>10%)
+            if abs(scale_factor - 1.0) > 0.1:
+                logger.info(f"⏱️ Ajustando duración del guion: {current_total_duration:.1f}s -> {target_total_duration:.1f}s (Factor: {scale_factor:.2f})")
+                for scene in processed_scenes:
+                    scene["duration"] = round(scene["duration"] * scale_factor, 2)
+            else:
+                logger.info(f"⏱️ Duración del guion precisa ({current_total_duration:.1f}s). No se requiere ajuste.")
+        
+        final_total_duration = sum(scene["duration"] for scene in processed_scenes)
 
         logger.success(
             f"Guion generado con {len(processed_scenes)} escenas "
-            f"(duración estimada {total_duration:.1f}s)."
+            f"(duración final {final_total_duration:.1f}s)."
         )
         for scene in processed_scenes:
             logger.info(
                 f"[Escena {scene['scene_number']}] {scene['segment']} "
-                f"→ visual_query: {scene['visual_query']}"
+                f"({scene['duration']}s) → visual_query: {scene['visual_query']}"
             )
 
         # Retornar directamente la lista de escenas para compatibilidad con main.py

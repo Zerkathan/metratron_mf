@@ -1,10 +1,13 @@
 """
 AssetManager: Descarga videos de stock desde múltiples fuentes o genera videos con Runway.
 Ahora usa StockEngine para combinar Pexels, Pixabay y soportar imágenes animadas.
+
+🔧 VERSIÓN CORREGIDA - Fix para error "Clip contiene componentes None inválidos"
 """
 
 import os
 import requests
+import shutil
 from pathlib import Path
 from typing import List, Dict, Optional
 from loguru import logger
@@ -83,6 +86,51 @@ class AssetManager:
                 self.use_runway = False
         
         logger.info(f"AssetManager inicializado (Runway: {'✅' if self.use_runway else '❌'})")
+    
+    def _create_placeholder_clip(self, output_dir: Path, scene_idx: int, duration: float = 5.0) -> Optional[str]:
+        """
+        🔧 NUEVO: Crea un clip de video negro como placeholder cuando no hay recurso disponible.
+        Esto evita el error "Clip contiene componentes None inválidos" en get_frame.
+        
+        Args:
+            output_dir: Directorio donde guardar el placeholder
+            scene_idx: Índice de la escena
+            duration: Duración del placeholder en segundos
+        
+        Returns:
+            Ruta del archivo de placeholder o None si falla
+        """
+        try:
+            from moviepy.editor import ColorClip
+            
+            placeholder_path = output_dir / f"scene_{scene_idx:02d}_placeholder.mp4"
+            
+            logger.info(f"🎬 Creando placeholder negro para escena {scene_idx + 1} ({duration}s)...")
+            
+            # Crear clip negro de 1080x1920 (vertical 9:16)
+            black_clip = ColorClip(size=(1080, 1920), color=(0, 0, 0), duration=duration)
+            black_clip = black_clip.set_fps(30)
+            
+            # Exportar con configuración mínima para rapidez
+            black_clip.write_videofile(
+                str(placeholder_path),
+                codec='libx264',
+                fps=30,
+                preset='ultrafast',
+                audio=False,
+                logger=None,
+                verbose=False
+            )
+            black_clip.close()
+            
+            logger.success(f"✅ Placeholder negro creado: {placeholder_path.name}")
+            return str(placeholder_path)
+            
+        except Exception as e:
+            logger.error(f"❌ Error creando placeholder: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return None
     
     def _search_video(self, query: str, per_page: int = 1) -> Optional[Dict]:
         """
@@ -178,12 +226,14 @@ class AssetManager:
         Descarga videos para todas las escenas de un guion.
         Usa Runway si está activo, sino usa Pexels.
         
+        🔧 CORREGIDO: Ya no agrega None a la lista. Si falla, crea un placeholder negro.
+        
         Args:
             script_data: Diccionario con el guion (debe tener 'scenes')
             output_dir: Directorio de salida
         
         Returns:
-            Lista de rutas de videos descargados
+            Lista de rutas de videos descargados (sin None)
         """
         scenes = script_data.get("scenes", [])
         logger.info(f"Iniciando {'generación' if self.use_runway else 'descarga'} de {len(scenes)} videos...")
@@ -192,12 +242,21 @@ class AssetManager:
         output_path.mkdir(parents=True, exist_ok=True)
         
         video_files = []
+        skipped_scenes = []  # 🔧 NUEVO: Tracking de escenas omitidas
+        
         for idx, scene in enumerate(scenes):
             # Normalizar: buscar visual_search_query primero, luego visual_query como fallback
             visual_query = scene.get("visual_search_query") or scene.get("visual_query", "")
             if not visual_query:
-                logger.warning(f"Escena {idx + 1} no tiene visual_query ni visual_search_query, saltando...")
-                video_files.append(None)
+                logger.warning(f"Escena {idx + 1} no tiene visual_query ni visual_search_query")
+                # 🔧 CORREGIDO: Crear placeholder en lugar de agregar None
+                placeholder = self._create_placeholder_clip(output_path, idx, 5.0)
+                if placeholder:
+                    video_files.append(placeholder)
+                    logger.warning(f"⚠️ Usando placeholder negro para escena {idx + 1} (sin query)")
+                else:
+                    skipped_scenes.append(idx + 1)
+                    logger.error(f"❌ Escena {idx + 1} omitida completamente")
                 continue
             
             # Logging mejorado para mostrar la query específica
@@ -213,6 +272,9 @@ class AssetManager:
                 elif self.runway_mode == "Solo Gancho (Escena 1)" and idx == 0:
                     should_use_runway = True
                     logger.info("💎 Usando Runway para el gancho (Escena 1)")
+            
+            # Variable para trackear si se obtuvo recurso
+            resource_obtained = False
             
             if should_use_runway:
                 # Generar video con Runway
@@ -230,18 +292,17 @@ class AssetManager:
                 if runway_video and Path(runway_video).exists():
                     # Renombrar al formato esperado
                     if Path(runway_video).name != video_file.name:
-                        import shutil
                         shutil.move(runway_video, str(video_file))
                     video_files.append(str(video_file))
                     logger.success(f"✅ Video Runway generado: Escena {idx + 1}")
+                    resource_obtained = True
                 else:
                     logger.warning(f"⚠️ Runway falló para escena {idx + 1}, usando Pexels como fallback")
                     # Fallback a Pexels
                     video_data = self._search_video(visual_query)
                     if video_data and self._download_video(video_data, str(video_file)):
                         video_files.append(str(video_file))
-                    else:
-                        video_files.append(None)
+                        resource_obtained = True
             else:
                 # Usar StockEngine (método unificado: Pexels + Pixabay + imágenes)
                 video_file = output_path / f"scene_{idx:02d}_video.mp4"
@@ -268,10 +329,12 @@ class AssetManager:
                             else:
                                 video_files.append(str(resource_path))
                             logger.success(f"✅ Video descargado para escena {idx + 1}")
+                            resource_obtained = True
                         elif resource_type == "image":
                             # Mantener la extensión original de la imagen (.jpg, .png, etc.)
                             # video_editor.py detectará automáticamente si es imagen
                             video_files.append(str(resource_path))
+                            resource_obtained = True
                             
                             # Detectar si es imagen de DALL-E (contiene "dalle" en el nombre)
                             if "dalle" in str(resource_path).lower():
@@ -280,30 +343,37 @@ class AssetManager:
                                 logger.info(f"📸 Imagen de stock descargada para escena {idx + 1} (se animará con Ken Burns)")
                         else:
                             logger.error(f"❌ No se pudo obtener recurso visual para escena {idx + 1}")
-                            video_files.append(None)
-                    else:
-                        logger.error(f"❌ No se encontró recurso visual para escena {idx + 1} (ni stock ni DALL-E disponible)")
-                        video_files.append(None)
                 else:
                     # Fallback: Usar método tradicional de Pexels
                     video_data = self._search_video(visual_query)
-                    if not video_data:
-                        logger.warning(f"No se encontró video para escena {idx + 1}")
-                        video_files.append(None)
-                        continue
-                    
-                    # Descargar video
-                    if self._download_video(video_data, str(video_file)):
+                    if video_data and self._download_video(video_data, str(video_file)):
                         video_files.append(str(video_file))
-                    else:
-                        video_files.append(None)
+                        resource_obtained = True
+            
+            # 🔧 CORREGIDO: Si no se obtuvo recurso, crear placeholder en lugar de None
+            if not resource_obtained:
+                logger.warning(f"⚠️ No se encontró recurso para escena {idx + 1}, creando placeholder...")
+                placeholder = self._create_placeholder_clip(output_path, idx, 5.0)
+                if placeholder:
+                    video_files.append(placeholder)
+                    logger.warning(f"⚠️ Usando placeholder negro para escena {idx + 1}")
+                else:
+                    skipped_scenes.append(idx + 1)
+                    logger.error(f"❌ Escena {idx + 1} omitida completamente (falló placeholder)")
         
-        success_count = sum(1 for v in video_files if v is not None)
-        runway_count = sum(1 for idx, v in enumerate(video_files) if v and self.use_runway and (self.runway_mode == "Todas las Escenas" or (self.runway_mode == "Solo Gancho (Escena 1)" and idx == 0)))
-        logger.success(f"Videos procesados: {success_count}/{len(scenes)} (Runway: {runway_count}, Pexels: {success_count - runway_count})")
+        # Estadísticas finales
+        success_count = len(video_files)
+        placeholder_count = sum(1 for v in video_files if v and "placeholder" in v)
+        real_count = success_count - placeholder_count
+        
+        logger.success(f"Videos procesados: {success_count}/{len(scenes)}")
+        logger.info(f"   📹 Recursos reales: {real_count}")
+        logger.info(f"   ⬛ Placeholders: {placeholder_count}")
+        
+        if skipped_scenes:
+            logger.warning(f"   ⚠️ Escenas omitidas: {skipped_scenes}")
+        
+        # 🔧 VALIDACIÓN FINAL: Asegurar que no hay None en la lista
+        video_files = [v for v in video_files if v is not None]
         
         return video_files
-
-
-
-
